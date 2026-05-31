@@ -417,8 +417,34 @@ def download_image():
 # =========================
 # UI LAYOUT
 # =========================
+
+# --- NEW SCROLLABLE SETUP START ---
+canvas = tk.Canvas(app, bg="#2e2e2e", highlightthickness=0)
+canvas.pack(side="left", fill="both", expand=True)
+
+scrollbar = ttk.Scrollbar(app, orient="vertical", command=canvas.yview)
+scrollbar.pack(side="right", fill="y")
+canvas.configure(yscrollcommand=scrollbar.set)
+
+main_frame = tk.Frame(canvas, bg="#2e2e2e")
+canvas_window = canvas.create_window((0, 0), window=main_frame, anchor="nw")
+
+def configure_main_frame(event):
+    canvas.configure(scrollregion=canvas.bbox("all"))
+main_frame.bind("<Configure>", configure_main_frame)
+
+def configure_canvas(event):
+    canvas.itemconfig(canvas_window, width=event.width)
+canvas.bind("<Configure>", configure_canvas)
+
+def _on_mousewheel(event):
+    canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+app.bind_all("<MouseWheel>", _on_mousewheel)
+# --- NEW SCROLLABLE SETUP END ---
+
+
 title_label = tk.Label(
-    app,
+    main_frame,
     text="VisionForge AI",
     font=("Segoe UI", 24, "bold"),
     fg="#00D4FF",
@@ -427,7 +453,7 @@ title_label = tk.Label(
 title_label.pack(pady=(15, 0))
 
 subtitle_label = tk.Label(
-    app,
+    main_frame,
     text="Developed by Aneek Ghosh",
     font=("Segoe UI", 10),
     fg="white",
@@ -435,28 +461,27 @@ subtitle_label = tk.Label(
 )
 subtitle_label.pack(pady=(0, 10))
 
-
 ttk.Label(
-    app,
+    main_frame,
     text="Enter Prompt:",
     font=("Arial", 12)
 ).pack(pady=(10, 5))
 
 ttk.Entry(
-    app,
+    main_frame,
     textvariable=prompt_var,
     width=90,
     font=("Arial", 11)
 ).pack(pady=5)
 
 ttk.Label(
-    app,
+    main_frame,
     text="Negative Prompt:",
     font=("Arial", 12)
 ).pack(pady=(10, 5))
 
 ttk.Entry(
-    app,
+    main_frame,
     textvariable=negative_prompt_var,
     width=90,
     font=("Arial", 11)
@@ -467,29 +492,28 @@ ttk.Entry(
 # =========================
 
 ttk.Label(
-    app,
+    main_frame,
     text="Style Preset:",
     font=("Arial", 12)
 ).pack(pady=(10, 5))
 
 style_dropdown = ttk.Combobox(
-    app,
+    main_frame,
     textvariable=style_var,
     values=list(STYLE_PRESETS.keys()),
     state="readonly",
     width=35
 )
-
 style_dropdown.pack(pady=5)
 
 ttk.Label(
-    app,
+    main_frame,
     text="Resolution:",
     font=("Arial", 12)
 ).pack(pady=(10, 5))
 
 resolution_dropdown = ttk.Combobox(
-    app,
+    main_frame,
     textvariable=resolution_var,
     values=[
         "512x512",
@@ -500,78 +524,141 @@ resolution_dropdown = ttk.Combobox(
     state="readonly",
     width=20
 )
-
 resolution_dropdown.pack(pady=5)
 
+# --- ADVANCED SETTINGS ---
+advanced_frame = tk.LabelFrame(
+    main_frame,
+    text="Advanced Settings",
+    bg="#2e2e2e",
+    fg="white"
+)
+advanced_frame.pack(pady=15, padx=20, fill="x")
 
+# Let the inner frame expand horizontally with some padding
+inner_adv_frame = tk.Frame(advanced_frame, bg="#2e2e2e")
+inner_adv_frame.pack(pady=10, fill="x", padx=40)
+
+# THIS IS THE MAGIC: Tell the middle column (column 1) to stretch and fill all extra space
+inner_adv_frame.columnconfigure(0, weight=0) # Left labels stay fixed
+inner_adv_frame.columnconfigure(1, weight=1) # Sliders expand!
+inner_adv_frame.columnconfigure(2, weight=0) # Right numbers stay fixed
+
+# Fix the crazy decimals on the Guidance Scale
+display_guidance_var = tk.StringVar(value=f"{guidance_var.get():.1f}")
+def round_guidance(*args):
+    display_guidance_var.set(f"{guidance_var.get():.1f}")
+guidance_var.trace_add("write", round_guidance)
+
+# Guidance Scale (CFG) Row
+ttk.Label(
+    inner_adv_frame,
+    text="Guidance Scale (CFG):",
+    font=("Arial", 10)
+).grid(row=0, column=0, padx=(0, 15), pady=8, sticky="e")
+
+guidance_slider = ttk.Scale(
+    inner_adv_frame,
+    from_=1.0,
+    to=20.0,
+    variable=guidance_var,
+    orient="horizontal"
+)
+# sticky="ew" forces the slider to stretch horizontally across column 1
+guidance_slider.grid(row=0, column=1, pady=8, sticky="ew")
+
+ttk.Label(
+    inner_adv_frame,
+    textvariable=display_guidance_var,
+    font=("Arial", 10, "bold"),
+    width=4
+).grid(row=0, column=2, padx=(15, 0), pady=8, sticky="w")
+
+# Inference Steps Row
+ttk.Label(
+    inner_adv_frame,
+    text="Inference Steps:",
+    font=("Arial", 10)
+).grid(row=1, column=0, padx=(0, 15), pady=8, sticky="e")
+
+steps_slider = ttk.Scale(
+    inner_adv_frame,
+    from_=10,
+    to=100,
+    variable=steps_var,
+    orient="horizontal"
+)
+steps_slider.grid(row=1, column=1, pady=8, sticky="ew")
+
+ttk.Label(
+    inner_adv_frame,
+    textvariable=steps_var,
+    font=("Arial", 10, "bold"),
+    width=4
+).grid(row=1, column=2, padx=(15, 0), pady=8, sticky="w")
+# -------------------------
 browse_btn = tk.Button(
-    app,
+    main_frame,
     text="📁 Upload Base Image",
     command=browse_image,
-    bg="#3498db",
-    fg="white",
-    font=("Segoe UI", 10, "bold"),
-    width=20,
-    height=1,
-    relief="flat"
-)
-
-browse_btn.pack(pady=5)
-
-generate_btn = tk.Button(
-    app,
-    text="✨Generate with VisionForge",
-    command=generate_image,
-    bg="#2ecc71",
+    bg="#34495e",  # Sleeker, darker blue
     fg="white",
     font=("Segoe UI", 11, "bold"),
-    width=25,
+    width=30,
     height=1,
-    relief="flat"
+    relief="flat",
+    cursor="hand2" # Adds the pointing hand cursor on hover
 )
+browse_btn.pack(pady=(15, 5))
 
-generate_btn.pack(pady=5)
+generate_btn = tk.Button(
+    main_frame,
+    text="✨ Generate with VisionForge",
+    command=generate_image,
+    bg="#00b894",  # Modern mint green
+    fg="white",
+    font=("Segoe UI", 12, "bold"),
+    width=30,
+    height=2,      # Make the main action button slightly larger
+    relief="flat",
+    cursor="hand2"
+)
+generate_btn.pack(pady=(5, 20))
 
 progress_bar = ttk.Progressbar(
-    app,
+    main_frame,
     orient="horizontal",
     length=300,
     mode="determinate",
     style="Vision.Horizontal.TProgressbar"
 )
-
 progress_bar.pack(pady=(8,2))
 
-#ttk.Label(
-#    app,
-#    textvariable=progress_percent_var
-#).pack()
-
 ttk.Label(
-    app,
+    main_frame,
     textvariable=progress_var,
     foreground="cyan"
 ).pack(pady=5)
 
 ttk.Label(
-    app,
+    main_frame,
     textvariable=output_path_var,
     wraplength=650
 ).pack(pady=5)
 
 output_panel = ttk.Label(
-    app,
+    main_frame,
     text="Generated Image Appears Here",
     background="#444444",
     foreground="white",
     anchor="center"
 )
 
+# expand=True was removed here to prevent layout glitching
 output_panel.pack(
     pady=20,
     padx=20,
-    fill="both",
-    expand=True
+    fill="both"
 )
 
 # =========================
@@ -579,12 +666,11 @@ output_panel.pack(
 # =========================
 
 history_frame = tk.LabelFrame(
-    app,
+    main_frame,
     text="Prompt History",
     bg="#2e2e2e",
     fg="white"
 )
-
 history_frame.pack(
     pady=10,
     padx=20,
@@ -596,7 +682,6 @@ history_list = tk.Listbox(
     width=45,
     height=5
 )
-
 history_list.pack(
     padx=5,
     pady=5,
@@ -604,42 +689,45 @@ history_list.pack(
 )
 
 def load_history_prompt(event):
-
     selection = history_list.curselection()
-
     if selection:
-        prompt_var.set(
-            history_list.get(selection[0])
-        )
+        prompt_var.set(history_list.get(selection[0]))
 
-history_list.bind(
-    "<Double-Button-1>",
-    load_history_prompt
-)
+history_list.bind("<Double-Button-1>", load_history_prompt)
 
-
-
+# =========================
+# DOWNLOAD BUTTON (NEW VIBRANT VERSION)
+# =========================
+# Configuration for Vibrant Aesthetics
+vibrant_gold = "#f1c40f"
+active_amber = "#f39c12"
+sharp_black = "#1e1e1e" # Slightly softer than pure black, looks cleaner
 
 download_btn = tk.Button(
-    app,
+    main_frame,
     text="💾 Save Generated Image",
     command=download_image,
-    bg="#9b59b6",
-    fg="white",
-    activebackground="#8e44ad",
-    activeforeground="white",
-    font=("Segoe UI", 10, "bold"),
-    width=20,
+    # 1. Vibrant Background
+    bg=vibrant_gold,
+    # 2. Sharp, High-Contrast Text (Essential for "Vibrancy")
+    fg=sharp_black,
+    # 3. Maintaining Vibrancy during clicks
+    activebackground=active_amber,
+    activeforeground=sharp_black,
+    # Make the font slightly larger for sharpness
+    font=("Segoe UI", 11, "bold"),
+    width=22, # Slightly wider
     height=1,
-    relief="flat"
+    relief="flat",
+    cursor="hand2"
 )
-
 download_btn.pack(pady=15)
 
 # =========================
 # MAIN LOOP
 # =========================
 
+# Keeping the footer attached to 'app' docks it cleanly at the bottom
 footer = tk.Label(
     app,
     text="VisionForge AI © 2026 | Developed by Aneek Ghosh",
@@ -650,4 +738,3 @@ footer = tk.Label(
 footer.pack(side="bottom", pady=5)
 
 app.mainloop()
-
