@@ -8,6 +8,7 @@ import os
 import shutil
 import threading
 import sys
+import webbrowser
 
 from diffusers import (
     StableDiffusionPipeline,
@@ -452,14 +453,22 @@ title_label = tk.Label(
 )
 title_label.pack(pady=(15, 0))
 
+# --- PASTE THE NEW CODE HERE ---
+def open_developer_link(event):
+    # Change this link to your actual profile!
+    webbrowser.open("https://github.com/AneekGhosh")
+
 subtitle_label = tk.Label(
     main_frame,
     text="Developed by Aneek Ghosh",
-    font=("Segoe UI", 10),
-    fg="white",
-    bg="#2e2e2e"
+    font=("Segoe UI", 10, "underline"),
+    fg="#3498db",
+    bg="#2e2e2e",
+    cursor="hand2"
 )
 subtitle_label.pack(pady=(0, 10))
+subtitle_label.bind("<Button-1>", open_developer_link)
+# --------------------------------
 
 ttk.Label(
     main_frame,
