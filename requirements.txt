@@ -1,0 +1,22 @@
+torch==2.1.0+cu118
+torchvision==0.16.0+cu118
+torchaudio==2.1.0+cu118
+--extra-index-url https://download.pytorch.org/whl/cu118
+
+numpy==1.26.4
+
+diffusers==0.18.2
+transformers==4.30.2
+huggingface_hub==0.16.4
+safetensors==0.4.1
+accelerate==0.24.1
+
+flask==2.3.3
+
+omegaconf
+imageio
+
+realesrgan
+gfpgan
+basicsr
+facexlib
